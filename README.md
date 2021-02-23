@@ -13,7 +13,7 @@ Check out our [Youtube Video]() to this project.
 
 ## Inspirations
 
- - A cup of Tea 🍵
+ - A cup of Oolong-Tea 🍵
  - Warpspeed effect by [Federico Dossena](https://fdossena.com/?p=home.frag)
  - [highlight.js](https://highlightjs.org/) for code highlighting
  - [TypewriterJS](https://safi.me.uk/typewriterjs/) for writing animation
