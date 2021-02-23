@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script>
+        var dt = (function () {
+
+            /**
+             * Creates an instance of DecisionTree
+             *
+             * @constructor
+             * @param builder - contains training set and
+             *                  some configuration parameters
+             */
+            function DecisionTree(builder) {
+                this.root = buildDecisionTree({
+                    trainingSet: builder.trainingSet,
+                    ignoredAttributes: arrayToHashSet(builder.ignoredAttributes),
+                    categoryAttr: builder.categoryAttr || 'category',
+                    minItemsCount: builder.minItemsCount || 1,
+                    entropyThrehold: builder.entropyThrehold || 0.01,
+                    maxTreeDepth: builder.maxTreeDepth || 70
+                });
+            }
+
+            DecisionTree.prototype.predict = function (item) {
+                return predict(this.root, item);
+            }
+
+            /**
+             * Creates an instance of RandomForest
+             * with specific number of trees
+             *
+             * @constructor
+             * @param builder - contains training set and some
+             *                  configuration parameters for
+             *                  building decision trees
+             */
+            function RandomForest(builder, treesNumber) {
+                this.trees = buildRandomForest(builder, treesNumber);
+            }
+
+            RandomForest.prototype.predict = function (item) {
+                return predictRandomForest(this.trees, item);
+            }
+
+            /**
+             * Transforming array to object with such attributes 
+             * as elements of array (afterwards it can be used as HashSet)
+             */
+            function arrayToHashSet(array) {
+                var hashSet = {};
+                if (array) {
+                    for (var i in array) {
+                        var attr = array[i];
+                        hashSet[attr] = true;
+                    }
+                }
+                return hashSet;
+            }
+
+            /**
+             * Calculating how many objects have the same 
+             * values of specific attribute.
+             *
+             * @param items - array of objects
+             *
+             * @param attr  - variable with name of attribute, 
+             *                which embedded in each object
+             */
+            function countUniqueValues(items, attr) {
+                var counter = {};
+
+                // detecting different values of attribute
+                for (var i = items.length - 1; i >= 0; i--) {
+                    // items[i][attr] - value of attribute
+                    counter[items[i][attr]] = 0;
+                }
+
+                // counting number of occurrences of each of values
+                // of attribute
+                for (var i = items.length - 1; i >= 0; i--) {
+                    counter[items[i][attr]] += 1;
+                }
+
+                return counter;
+            }
+
+            /**
+             * Calculating entropy of array of objects 
+             * by specific attribute.
+             *
+             * @param items - array of objects
+             *
+             * @param attr  - variable with name of attribute, 
+             *                which embedded in each object
+             */
+            function entropy(items, attr) {
+                // counting number of occurrences of each of values
+                // of attribute
+                var counter = countUniqueValues(items, attr);
+
+                var entropy = 0;
+                var p;
+                for (var i in counter) {
+                    p = counter[i] / items.length;
+                    entropy += -p * Math.log(p);
+                }
+
+                return entropy;
+            }
+
+            /**
+             * Splitting array of objects by value of specific attribute, 
+             * using specific predicate and pivot.
+             *
+             * Items which matched by predicate will be copied to 
+             * the new array called 'match', and the rest of the items 
+             * will be copied to array with name 'notMatch'
+             *
+             * @param items - array of objects
+             *
+             * @param attr  - variable with name of attribute,
+             *                which embedded in each object
+             *
+             * @param predicate - function(x, y) 
+             *                    which returns 'true' or 'false'
+             *
+             * @param pivot - used as the second argument when 
+             *                calling predicate function:
+             *                e.g. predicate(item[attr], pivot)
+             */
+            function split(items, attr, predicate, pivot) {
+                var match = [];
+                var notMatch = [];
+
+                var item,
+                    attrValue;
+
+                for (var i = items.length - 1; i >= 0; i--) {
+                    item = items[i];
+                    attrValue = item[attr];
+
+                    if (predicate(attrValue, pivot)) {
+                        match.push(item);
+                    } else {
+                        notMatch.push(item);
+                    }
+                };
+
+                return {
+                    match: match,
+                    notMatch: notMatch
+                };
+            }
+
+            /**
+             * Finding value of specific attribute which is most frequent
+             * in given array of objects.
+             *
+             * @param items - array of objects
+             *
+             * @param attr  - variable with name of attribute, 
+             *                which embedded in each object
+             */
+            function mostFrequentValue(items, attr) {
+                // counting number of occurrences of each of values
+                // of attribute
+                var counter = countUniqueValues(items, attr);
+
+                var mostFrequentCount = 0;
+                var mostFrequentValue;
+
+                for (var value in counter) {
+                    if (counter[value] > mostFrequentCount) {
+                        mostFrequentCount = counter[value];
+                        mostFrequentValue = value;
+                    }
+                };
+
+                return mostFrequentValue;
+            }
+
+            var predicates = {
+                '==': function (a, b) { return a == b },
+                '>=': function (a, b) { return a >= b }
+            };
+
+            /**
+             * Function for building decision tree
+             */
+            function buildDecisionTree(builder) {
+
+                var trainingSet = builder.trainingSet;
+                var minItemsCount = builder.minItemsCount;
+                var categoryAttr = builder.categoryAttr;
+                var entropyThrehold = builder.entropyThrehold;
+                var maxTreeDepth = builder.maxTreeDepth;
+                var ignoredAttributes = builder.ignoredAttributes;
+
+                if ((maxTreeDepth == 0) || (trainingSet.length <= minItemsCount)) {
+                    // restriction by maximal depth of tree
+                    // or size of training set is to small
+                    // so we have to terminate process of building tree
+                    return {
+                        category: mostFrequentValue(trainingSet, categoryAttr)
+                    };
+                }
+
+                var initialEntropy = entropy(trainingSet, categoryAttr);
+
+                if (initialEntropy <= entropyThrehold) {
+                    // entropy of training set too small
+                    // (it means that training set is almost homogeneous),
+                    // so we have to terminate process of building tree
+                    return {
+                        category: mostFrequentValue(trainingSet, categoryAttr)
+                    };
+                }
+
+                // used as hash-set for avoiding the checking of split by rules
+                // with the same 'attribute-predicate-pivot' more than once
+                var alreadyChecked = {};
+
+                // this variable expected to contain rule, which splits training set
+                // into subsets with smaller values of entropy (produces informational gain)
+                var bestSplit = { gain: 0 };
+
+                const attributes = trainingSet.length ? Object.keys(trainingSet[0]) : Array(0);
+                for (var iAttr = attributes.length - 1; iAttr >= 0; iAttr--) {
+                    attr = attributes[iAttr];
+
+                    // iterating over all attributes of item
+                    // for (var attr in item) {
+                    if ((attr == categoryAttr) || ignoredAttributes[attr]) {
+                        continue;
+                    }
+
+                    // sort dataset according to current attribute
+                    // PERFORMANCE KILLER!
+                    trainingSet = trainingSet.sort((a, b) => a < b);
+
+                    for (var i = trainingSet.length - 1; i >= 0; i--) {
+
+                        var item = trainingSet[i];
+                        var next_item = i >= 0 ? trainingSet[i - 1] : undefined;
+
+                        // let the pivot be the middle element between
+                        // this item and the next one (better looking splits)
+                        var pivot = next_item ? (item[attr] + next_item[attr]) / 2 : item[attr];
+
+                        // pick the predicate
+                        // depending on the type of the attribute value
+                        var predicateName;
+                        if (typeof pivot == 'number') {
+                            predicateName = '>=';
+                        } else {
+                            // there is no sense to compare non-numeric attributes
+                            // so we will check only equality of such attributes
+                            predicateName = '==';
+                        }
+
+                        var attrPredPivot = attr + predicateName + pivot;
+                        if (alreadyChecked[attrPredPivot]) {
+                            // skip such pairs of 'attribute-predicate-pivot',
+                            // which been already checked
+                            continue;
+                        }
+                        alreadyChecked[attrPredPivot] = true;
+
+                        var predicate = predicates[predicateName];
+
+                        // splitting training set by given 'attribute-predicate-value'
+                        var currSplit = split(trainingSet, attr, predicate, pivot);
+
+                        // calculating entropy of subsets
+                        var matchEntropy = entropy(currSplit.match, categoryAttr);
+                        var notMatchEntropy = entropy(currSplit.notMatch, categoryAttr);
+
+                        // calculating informational gain
+                        var newEntropy = 0;
+                        newEntropy += matchEntropy * currSplit.match.length;
+                        newEntropy += notMatchEntropy * currSplit.notMatch.length;
+                        newEntropy /= trainingSet.length;
+                        var currGain = initialEntropy - newEntropy;
+
+                        if (currGain > bestSplit.gain) {
+                            // remember pairs 'attribute-predicate-value'
+                            // which provides informational gain
+                            bestSplit = currSplit;
+                            bestSplit.predicateName = predicateName;
+                            bestSplit.predicate = predicate;
+                            bestSplit.attribute = attr;
+                            bestSplit.pivot = pivot;
+                            bestSplit.gain = currGain;
+                        }
+                    }
+                }
+
+                /*
+                for (var i = trainingSet.length - 1; i >= 0; i--) {
+ 
+                    var item = trainingSet[i];
+                    // var next_item = i > 0 ? trainingSet[i - 1] : undefined;
+ 
+                    // iterating over all attributes of item
+                    for (var attr in item) {
+ 
+                        if ((attr == categoryAttr) || ignoredAttributes[attr]) {
+                            continue;
+                        }
+ 
+                        // let the value of current attribute be the pivot
+                        var pivot = item[attr];
+                        // var pivot = next_item ? (item[attr] + next_item[attr]) / 2 : item[attr];
+ 
+                        // pick the predicate
+                        // depending on the type of the attribute value
+                        var predicateName;
+                        if (typeof pivot == 'number') {
+                            predicateName = '>=';
+                        } else {
+                            // there is no sense to compare non-numeric attributes
+                            // so we will check only equality of such attributes
+                            predicateName = '==';
+                        }
+ 
+                        var attrPredPivot = attr + predicateName + pivot;
+                        if (alreadyChecked[attrPredPivot]) {
+                            // skip such pairs of 'attribute-predicate-pivot',
+                            // which been already checked
+                            continue;
+                        }
+                        alreadyChecked[attrPredPivot] = true;
+ 
+                        var predicate = predicates[predicateName];
+ 
+                        // splitting training set by given 'attribute-predicate-value'
+                        var currSplit = split(trainingSet, attr, predicate, pivot);
+ 
+                        // calculating entropy of subsets
+                        var matchEntropy = entropy(currSplit.match, categoryAttr);
+                        var notMatchEntropy = entropy(currSplit.notMatch, categoryAttr);
+ 
+                        // calculating informational gain
+                        var newEntropy = 0;
+                        newEntropy += matchEntropy * currSplit.match.length;
+                        newEntropy += notMatchEntropy * currSplit.notMatch.length;
+                        newEntropy /= trainingSet.length;
+                        var currGain = initialEntropy - newEntropy;
+ 
+                        if (currGain > bestSplit.gain) {
+                            // remember pairs 'attribute-predicate-value'
+                            // which provides informational gain
+                            bestSplit = currSplit;
+                            bestSplit.predicateName = predicateName;
+                            bestSplit.predicate = predicate;
+                            bestSplit.attribute = attr;
+                            bestSplit.pivot = pivot;
+                            bestSplit.gain = currGain;
+                        }
+                    }
+                }
+                */
+
+                if (!bestSplit.gain) {
+                    // can't find optimal split
+                    return { category: mostFrequentValue(trainingSet, categoryAttr) };
+                }
+
+                // building subtrees
+
+                builder.maxTreeDepth = maxTreeDepth - 1;
+
+                builder.trainingSet = bestSplit.match;
+                var matchSubTree = buildDecisionTree(builder);
+
+                builder.trainingSet = bestSplit.notMatch;
+                var notMatchSubTree = buildDecisionTree(builder);
+
+                return {
+                    attribute: bestSplit.attribute,
+                    predicate: bestSplit.predicate,
+                    predicateName: bestSplit.predicateName,
+                    pivot: bestSplit.pivot,
+                    match: matchSubTree,
+                    notMatch: notMatchSubTree,
+                    matchedCount: bestSplit.match.length,
+                    notMatchedCount: bestSplit.notMatch.length
+                };
+            }
+
+            /**
+             * Classifying item, using decision tree
+             */
+            function predict(tree, item) {
+                var attr,
+                    value,
+                    predicate,
+                    pivot;
+
+                // Traversing tree from the root to leaf
+                while (true) {
+
+                    if (tree.category) {
+                        // only leafs contains predicted category
+                        return tree.category;
+                    }
+
+                    attr = tree.attribute;
+                    value = item[attr];
+
+                    predicate = tree.predicate;
+                    pivot = tree.pivot;
+
+                    // move to one of subtrees
+                    if (predicate(value, pivot)) {
+                        tree = tree.match;
+                    } else {
+                        tree = tree.notMatch;
+                    }
+                }
+            }
+
+            /**
+             * Building array of decision trees
+             */
+            function buildRandomForest(builder, treesNumber) {
+                var items = builder.trainingSet;
+
+                // creating training sets for each tree
+                var trainingSets = [];
+                for (var t = 0; t < treesNumber; t++) {
+                    trainingSets[t] = [];
+                }
+                for (var i = items.length - 1; i >= 0; i--) {
+                    // assigning items to training sets of each tree
+                    // using 'round-robin' strategy
+                    var correspondingTree = i % treesNumber;
+                    trainingSets[correspondingTree].push(items[i]);
+                }
+
+                // building decision trees
+                var forest = [];
+                for (var t = 0; t < treesNumber; t++) {
+                    builder.trainingSet = trainingSets[t];
+
+                    var tree = new DecisionTree(builder);
+                    forest.push(tree);
+                }
+                return forest;
+            }
+
+            /**
+             * Each of decision tree classifying item
+             * ('voting' that item corresponds to some class).
+             *
+             * This function returns hash, which contains 
+             * all classifying results, and number of votes 
+             * which were given for each of classifying results
+             */
+            function predictRandomForest(forest, item) {
+                var result = {};
+                for (var i in forest) {
+                    var tree = forest[i];
+                    var prediction = tree.predict(item);
+                    result[prediction] = result[prediction] ? result[prediction] + 1 : 1;
+                }
+                return result;
+            }
+
+            var exports = {};
+            exports.DecisionTree = DecisionTree;
+            exports.RandomForest = RandomForest;
+            return exports;
+        })();
+    </script>
+
+    <style>
+        #main {
+            display: flex;
+            flex-direction: row;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin: 30px;
+            margin-top: 5px;
+        }
+
+        .color-select {
+            margin: 1px;
+            margin-top: 10px;
+            width: 30px;
+            height: 30px;
+            display: inline-block;
+        }
+
+        .color-select:first-child {
+            margin-left: 30px;
+        }
+
+        .clearBtn {
+            margin-top: 12px;
+            margin-left: 15px;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+            color: white;
+            background-color: rgba(53, 53, 53, 0.69);
+            font-size: 15px;
+            text-decoration: none;
+            cursor: poiner;
+            height: 30px;
+            position: absolute;
+            padding-left: 1em;
+            padding-right: 1em;
+        }
+
+        /*
+ Transforming nested lists to pretty tree
+ 
+ <div class="tree">
+    <ul>
+        <li>
+            <ul>
+            ...
+            </ul>
+        </li>
+        ...
+    </ul>
+ </div>
+ 
+Source: http://thecodeplayer.com/walkthrough/css3-family-tree
+
+Some other advices about displaying trees: http://stackoverflow.com/questions/1695115/how-do-i-draw-the-lines-of-a-family-tree-using-html-css
+*/
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+
+        .tree li {
+            white-space: nowrap;
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+
+        /*We will use ::before and ::after to draw the connectors*/
+
+        .tree li::before,
+        .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 1px solid #ccc;
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 1px solid #ccc;
+        }
+
+        /*We need to remove left-right connectors from elements without
+ any siblings*/
+        .tree li:only-child::after,
+        .tree li:only-child::before {
+            display: none;
+        }
+
+        /*Remove space from the top of single children*/
+        .tree li:only-child {
+            padding-top: 0;
+        }
+
+        /*Remove left connector from first child and
+ right connector from last child*/
+        .tree li:first-child::before,
+        .tree li:last-child::after {
+            border: 0 none;
+        }
+
+        /*Adding back the vertical connector to the last nodes*/
+        .tree li:last-child::before {
+            border-right: 1px solid #ccc;
+            border-radius: 0 5px 0 0;
+            -webkit-border-radius: 0 5px 0 0;
+            -moz-border-radius: 0 5px 0 0;
+        }
+
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+            -webkit-border-radius: 5px 0 0 0;
+            -moz-border-radius: 5px 0 0 0;
+        }
+
+        /*Time to add downward connectors from parents*/
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 1px solid #ccc;
+            width: 0;
+            height: 20px;
+        }
+
+        .tree li a {
+            color: black;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            text-decoration: none;
+            /* color: #c8e4f8; */
+            font-family: arial, verdana, tahoma;
+            font-size: 18px;
+            display: inline-block;
+            background: #c8e4f8;
+
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+
+        /*Time for some hover effects*/
+        /*We will apply the hover effect the the lineage of the element also*/
+        /* .tree li a:hover,
+        .tree li a:hover+ul li a {
+            background: #c8e4f8;
+            color: #000;
+            border: 1px solid #94a0b4;
+        } */
+
+        /*Connector styles on hover*/
+        .tree li a:hover+ul li::after,
+        .tree li a:hover+ul li::before,
+        .tree li a:hover+ul::before,
+        .tree li a:hover+ul ul::before {
+            border-color: #94a0b4;
+        }
+
+        /*Thats all. I hope you enjoyed it.
+ Thanks :)*/
+    </style>
+</head>
+
+<body>
+    <div id="main">
+
+        <!-- Drawing -->
+        <div>
+            <div class="color-select" label="#33CCFF">&nbsp;</div>
+            <div class="color-select" label="#009933">&nbsp;</div>
+            <div class="color-select" label="#FF6600">&nbsp;</div>
+            <div class="color-select" label="#FFC508">&nbsp;</div>
+
+            <button id="clearBtn" class="clearBtn">clear</button>
+            <br />
+
+            <canvas id="myCanvas" width="400" height="400"></canvas>
+            <br />
+        </div>
+
+        <!-- Tree Viz -->
+        <div>
+            <div class="tree" id="displayTree"></div>
+        </div>
+
+    </div>
+
+
+    <script>
+        // var dt = function () { 
+        //     function p(a) { 
+        //         var c = {}; 
+        //         if (a.ignoredAttributes) 
+        //             for (var d in a.ignoredAttributes) 
+        //                 c[a.ignoredAttributes[d]] = !0; 
+        //                 this.root = v({ trainingSet: a.trainingSet, ignoredAttributes: c, categoryAttr: a.categoryAttr || "category", minItemsCount: a.minItemsCount || 1, entropyThrehold: a.entropyThrehold || 0.01, maxTreeDepth: a.maxTreeDepth || 70 }) } function q(a, c) { for (var d = a.trainingSet, e = [], b = 0; b < c; b++)e[b] = []; for (b = 0; b < d.length; b++)e[b % c].push(d[b]); d = []; for (b = 0; b < c; b++) { a.trainingSet = e[b]; var f = new p(a); d.push(f) } this.trees = d } function r(a, c) { var d = {}, e; for (e in a) { var b = a[e][c]; d[b] = d[b] ? d[b] + 1 : 1 } return d } function w(a, c) { var d = r(a, c), e = 0, b; for (b in d) var f = d[b] / a.length, e = e + -f * Math.log(f); return e } function x(a, c) { var d = r(a, c), e = 0, b, f; for (f in d) d[f] > e && (e = d[f], b = f); return b } function v(a) { var c = a.trainingSet, d = a.minItemsCount, e = a.categoryAttr, b = a.entropyThrehold, f = a.maxTreeDepth, p = a.ignoredAttributes; if (0 == f || c.length <= d) return { category: x(c, e) }; d = w(c, e); if (d <= b) return { category: x(c, e) }; var b = { gain: 0 }, m = {}, n; for (n in c) { var q = c[n], k; for (k in q) if (k != e && !p[k]) { var t = q[k], u; u = "number" == typeof t ? ">=" : "=="; var s = k + u + t; if (!m[s]) { m[s] = !0; var s = C[u], g; g = c; var l = k, y = s, h = t, r = [], A = [], B = void 0; for (B in g) { var z = g[B]; y(z[l], h) ? r.push(z) : A.push(z) } g = { match: r, notMatch: A }; l = w(g.match, e); y = w(g.notMatch, e); h = 0; h += l * g.match.length; h += y * g.notMatch.length; h /= c.length; l = d - h; l > b.gain && (b = g, b.predicateName = u, b.predicate = s, b.attribute = k, b.pivot = t, b.gain = l) } } } if (!b.gain) return { category: x(c, e) }; a.maxTreeDepth = f - 1; a.trainingSet = b.match; c = v(a); a.trainingSet = b.notMatch; a = v(a); return { attribute: b.attribute, predicate: b.predicate, predicateName: b.predicateName, pivot: b.pivot, match: c, notMatch: a, matchedCount: b.match.length, notMatchedCount: b.notMatch.length } } function m(a, c) { if (a.category) return a.category; var d = a.predicate; return d(c[a.attribute], a.pivot) ? m(a.match, c) : m(a.notMatch, c) } var C = { "==": function (a, c) { return a == c }, ">=": function (a, c) { return a >= c } }; p.prototype.predict = function (a) { return m(this.root, a) }; q.prototype.predict = function (a) { var c = this.trees, d = {}, e; for (e in c) { var b = c[e].predict(a); d[b] = d[b] ? d[b] + 1 : 1 } return d }; var n = {}; n.DecisionTree = p; n.RandomForest = q; return n }();
+
+        var canv = document.getElementById('myCanvas');
+        var clearBtn = document.getElementById('clearBtn');
+        var context = canv.getContext('2d');
+        var displayTreeDiv = document.getElementById('displayTree');
+
+        var NOT_SELECTED_COLOR_STYLE = 'none';
+        var SELECTED_COLOR_STYLE = '2px solid white';
+        var NOT_SELECTED_FILTER_STYLE = 'none';
+        var SELECTED_FILTER_STYLE = 'blur(0px) drop-shadow(0 0 4px ';
+        var FILTER_STYLE_CLOSE = ')';
+
+        var colorSelectElements = document.getElementsByClassName('color-select');
+        for (var i = 0; i < colorSelectElements.length; i++) {
+            colorSelectElements[i].style.backgroundColor = colorSelectElements[i].getAttribute('label');
+            colorSelectElements[i].style.border = NOT_SELECTED_COLOR_STYLE;
+            // colorSelectElements[i].style.filter = NOT_SELECTED_FILTER_STYLE;
+        }
+
+        var color = colorSelectElements[0].getAttribute('label');
+        var POINT_RADIUS = 3;
+        var points = [];
+        var tree = null;
+        var MAX_ALPHA = 128;
+        var addingPoints = false;
+
+        colorSelectElements[0].style.border = SELECTED_COLOR_STYLE;
+        // colorSelectElements[0].style.filter = SELECTED_FILTER_STYLE
+        //     + colorSelectElements[0].style.backgroundColor
+        //     + FILTER_STYLE_CLOSE;
+
+        canv.addEventListener('mousedown', enableAddingPointsListener, false);
+
+        canv.addEventListener('mouseup', rebuildForestListener, false);
+
+        canv.addEventListener('mouseout', rebuildForestListener, false);
+
+        canv.addEventListener('mousemove', addPointsListener, false);
+
+
+        for (var i = 0; i < colorSelectElements.length; i++) {
+            colorSelectElements[i].addEventListener('click', selectColorListener, false);
+        }
+
+        clearBtn.addEventListener('click', clearCanvasListener, false);
+
+        function enableAddingPointsListener(e) {
+            e.preventDefault();
+            addingPoints = true;
+        }
+
+        function addPointsListener(e) {
+            if (addingPoints) {
+                var x = e.offsetX ? e.offsetX : (e.layerX - canv.offsetLeft);
+                var y = e.offsetY ? e.offsetY : (e.layerY - canv.offsetTop);
+
+                drawCircle(context, x, y, POINT_RADIUS, color);
+                points.push({
+                    x: x,
+                    y: y,
+                    color: color
+                });
+            }
+        }
+
+        function rebuildForestListener(e) {
+
+            if (!addingPoints) return;
+
+            if (points.length == 0) return;
+
+            addingPoints = false;
+
+
+            var threshold = Math.floor(points.length / 100);
+            threshold = (threshold > 1) ? threshold : 1;
+
+            tree = new dt.DecisionTree({
+                trainingSet: points,
+                categoryAttr: 'color',
+                minItemsCount: threshold
+            });
+
+            displayTreePredictions();
+            displayPoints();
+
+            displayTreeDiv.innerHTML = treeToHtml(tree.root);
+        }
+
+        function displayTreePredictions() {
+            context.clearRect(0, 0, canv.width, canv.height);
+            var imageData = context.getImageData(0, 0, canv.width, canv.height);
+
+            for (var x = 0; x < canv.width; x++) {
+                for (var y = 0; y < canv.height; y++) {
+                    var predictedHexColor = tree.predict({
+                        x: x,
+                        y: y
+                    });
+                    putPixel(imageData, canv.width, x, y, predictedHexColor, MAX_ALPHA);
+                }
+            }
+
+            context.putImageData(imageData, 0, 0);
+        }
+
+        function displayPoints() {
+            for (var p in points) {
+                drawCircle(context, points[p].x, points[p].y, POINT_RADIUS, points[p].color);
+            }
+        }
+
+        function drawCircle(context, x, y, radius, hexColor) {
+            context.beginPath();
+            context.arc(x, y, radius, 0, 2 * Math.PI, false);
+
+            var c = hexToRgb(hexColor)
+            context.fillStyle = 'rgb(' + c.r + ',' + c.g + ',' + c.b + ')';
+
+            context.fill();
+            context.closePath();
+            context.stroke();
+        }
+
+        function putPixel(imageData, width, x, y, hexColor, alpha) {
+            var c = hexToRgb(hexColor);
+            var indx = (y * width + x) * 4;
+
+            var currAlpha = imageData.data[indx + 3];
+
+            imageData.data[indx + 0] = (c.r * alpha + imageData.data[indx + 0] * currAlpha) / (alpha + currAlpha);
+            imageData.data[indx + 1] = (c.g * alpha + imageData.data[indx + 1] * currAlpha) / (alpha + currAlpha);
+            imageData.data[indx + 2] = (c.b * alpha + imageData.data[indx + 2] * currAlpha) / (alpha + currAlpha);
+            imageData.data[indx + 3] = alpha + currAlpha;
+        }
+
+        function selectColorListener(event) {
+            color = this.getAttribute('label');
+
+            for (var i = 0; i < colorSelectElements.length; i++) {
+                colorSelectElements[i].style.border = NOT_SELECTED_COLOR_STYLE;
+                // colorSelectElements[i].style.filter = NOT_SELECTED_FILTER_STYLE;
+            }
+
+            this.style.border = SELECTED_COLOR_STYLE;
+            // this.style.filter = SELECTED_FILTER_STYLE + this.style.backgroundColor + FILTER_STYLE_CLOSE;
+        }
+
+        function clearCanvasListener(event) {
+            context.clearRect(0, 0, canv.width, canv.height);
+            points = [];
+            displayTreeDiv.innerHTML = '';
+        }
+
+        /**
+                 * Taken from: http://stackoverflow.com/a/5624139/653511
+                 */
+        function hexToRgb(hex) {
+            // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+            hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+                return r + r + g + g + b + b;
+            });
+
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        // Repeating of string taken from: http://stackoverflow.com/a/202627/653511
+        var EMPTY_STRING = new Array(26).join('&nbsp;');
+
+        // Recursively traversing decision tree (DFS)
+        function treeToHtml(tree) {
+
+            if (tree.category) {
+                return ['<ul>',
+                    '<li>',
+                    '<a href="#" style="background-color:', tree.category, '">', EMPTY_STRING, '</a>',
+                    '</li>',
+                    '</ul>'].join('');
+            }
+
+            return ['<ul>',
+                '<li>',
+                '<a href="#"><b>', tree.attribute, ' ', tree.predicateName, ' ', tree.pivot, ' ?</b></a>',
+                '<ul>',
+                '<li>',
+                '<a href="#">yes (', tree.matchedCount, ' points) </a>',
+                treeToHtml(tree.match),
+                '</li>',
+                '<li>',
+                '<a href="#">no (', tree.notMatchedCount, ' points) </a>',
+                treeToHtml(tree.notMatch),
+                '</li>',
+                '</ul>',
+                '</li>',
+                '</ul>'].join('');
+        }
+    </script>
+
+</body>
+
+</html>

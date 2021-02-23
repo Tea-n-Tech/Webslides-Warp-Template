@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SEO -->
+  <title>Warp Webslides Presentation</title>
+  <meta name="description" content="">
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,700,700i%7CMaitree:200,300,400,600,700&amp;subset=latin-ext"
+    rel="stylesheet">
+
+  <!-- CSS WebSlides -->
+  <link rel="stylesheet" type='text/css' media='all' href="./css/webslides.css">
+
+  <!-- Typewriter -->
+  <script src="./js/typewriter.min.js"></script>
+
+  <!-- JQUERY -->
+  <script src="./js/jquery.min.js "></script>
+
+  <!-- HIGHLIGHTS (code highlighting) -->
+  <link rel="stylesheet" href="./css/highlight.css">
+  <script src="./js/highlight.min.js"></script>
+
+  <!-- Warpspeed -->
+  <script src="./js/warpspeed.min.js"></script>
+
+  <!-- JS -->
+  <link rel="stylesheet" href="./css/tnt-webslides.css">
+  <script src="./js/d3.min.js"></script>
+  <script src="./js/tnt-webslides.js"></script>
+
+</head>
+
+<body style="background-image: url(./pix/background-large.jpg);">
+
+  <canvas height="100%" width="100%" id="warp-slide" style="  
+  position: absolute;
+  display:  block;
+  top: 0px;
+  bottom: 0px;
+  height: 100%;
+  width: 100%;
+opacity: 0.7;  ">
+  </canvas>
+
+  <main role="main">
+    <article id="webslides" class="horizontal">
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+
+        <div class="wrap aligncenter main-title-div">
+
+          <div>
+            <a href="https://www.youtube.com/channel/UCba194Pls_bHSqWoWMGoyzA">
+              <img style="height:100%" src="./pix/tnt-logo-space.svg">
+            </a>
+          </div>
+          <br>
+          <!-- <hr> -->
+          <div style=" padding-left: 1em; padding-right: 1em;">
+            <div>
+              <p class="text-intro">
+                Webslides template designed by <a href="https://www.linkedin.com/in/constantin-diez/">Codie </a>
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="warp aligncenter">
+          <h1><strong>Why Webslides?</strong></h1>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="wrap size-75">
+          <h2>
+            <strong>Interactive 3D Graphs</strong>
+          </h2>
+          <p>Playful and interactive discovery helps understanding</p>
+          <div>
+            <button onClick='loadIFrame(this,"./pix/car-frame.html","100%","720px")'>
+              Load Graph
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="grid vertical-align size-60">
+          <div class="column">
+            <h1 class="left-item"><strong>Beautiful Slides</strong></h1>
+          </div>
+          <div class="column">
+            <ul>
+              <li class="right-item">
+                <strong>Stunning</strong>
+                <p>
+                  Design living slides and discover
+                  knowledge through playfulness.
+                </p>
+              </li>
+              <li class="right-item">
+                <strong>Efficient</strong>
+                <p>
+                  Clean and concise forces you to
+                  transmit lean messages.
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <span class="background-left-bottom shadow-cyan-3"
+          style="background-image:url('./pix/persons-jack-ma-small.png');"></span>
+
+        <div class="grid size-80">
+
+          <div class="column">
+            <!-- empty -->
+          </div>
+
+          <div class="column space-container shadow-cyan-8">
+            <blockquote class="text-quote">
+              <p>I think we should teach our kids how to be more innovative, how to be more creative, and how to be
+                more constructive, all the things machines can’t do.</p>
+              <p><cite>Jack Ma (Alibaba Group Founder)</cite></p>
+            </blockquote>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="wrap size-80">
+          <div style="height: 70vh;">
+
+            <h1 class="txt-center">
+              <strong>Expandable Tabs</strong>
+            </h1>
+
+            <div class="tabs-animated">
+              <div class="tab">
+                <a href="#" style="font-size: 1.5em;">
+                  <strong>
+                    Passion
+                  </strong>
+                </a>
+                <div class="content center-items-flex">
+                  <ul class="list-tnt">
+                    <li>Find a topic you love</li>
+                    <li>Master it</li>
+                    <li>Share what you have learned</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="tab">
+                <a href="#" style="font-size: 1.5em;">
+                  <strong>
+                    Discipline
+                  </strong>
+                </a>
+                <div class="content center-items-flex">
+                  <ul class="list-tnt">
+                    <li>Build a routine</li>
+                    <li>Question your routine regularly</li>
+                    <li>Alter and adapt</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="tab">
+                <a href="#" style="font-size: 1.5em;">
+                  <strong>
+                    Free Mindedness
+                  </strong>
+                </a>
+                <div class="content center-items-flex">
+                  <ul class="list-tnt">
+                    <li>You can do anything you want</li>
+                    <li>Learn from nature</li>
+                    <li>Find out who you are</li>
+                    <li>Travel the path of self-discovery</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <span data-step-count="1"></span>
+
+        <div class="wrap size-75 grid">
+          <div class="column txt-center center-items-margin">
+            <h1>
+              <strong>Animations</strong>
+            </h1>
+          </div>
+
+          <div class="column" style="display:flex; flex-direction: row; align-items:center;">
+
+            <div class="center-items-flex">
+              <h4>Step One</h4>
+              <table style="width: 200px;">
+                <tr>
+                  <td>Duration</td>
+                  <td>20-30s</td>
+                </tr>
+                <tr>
+                  <td>Idle</td>
+                  <td>70%</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="animate-show-visibility" data-step="1"
+              style="display:flex; flex-direction:column; margin-left: 3rem;">
+              <h3>&rightarrow;</h3>
+            </div>
+
+            <div class="animate-show-visibility center-items-flex" data-step="1" style="margin-left: 3rem;">
+              <h4>Step Two</h4>
+              <table style="width: 200px;">
+                <tr>
+                  <td>Duration</td>
+                  <td>10-15s</td>
+                </tr>
+                <tr>
+                  <td>Idle</td>
+                  <td>20%</td>
+                </tr>
+
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="warp aligncenter">
+          <h1 id="typewriter-heading"><strong></strong></h1>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="wrap size-75 ">
+          <h1>
+            <strong>Interactive Examples</strong>
+          </h1>
+          <p>Draw points in different colors to see a corresponding decision tree.</p>
+          <div>
+            <button onClick='loadIFrame(this,"./pix/treeapp.html","100%","650px")'>
+              Load App
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+
+        <div class="wrap vertical-align size-75 grid">
+          <div class="column txt-center">
+            <h1>
+              <strong>Code Highlighting</strong>
+            </h1>
+            <hr>
+            <p>Beautiful code highlighting with highlight.js</p>
+          </div>
+          <div class="column">
+            <pre class="shadow-cyan-8">
+<code class="python">  >>> # list comprehension ❤️
+  >>> data = [ii for ii in range(10)]
+
+  >>> # best code ever
+  >>> print("hello world")
+  hello world
+
+  >>> # some math
+  >>> import numpy as np
+  >>> x = np.random.random((30, 3))
+</code>  
+</pre>
+          </div>
+        </div>
+        <script>
+          hljs.initHighlightingOnLoad();
+        </script>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="wrap size-70">
+          <h3>Galleries</h3>
+          <ul class="flexblock gallery vertical-align">
+            <li>
+              <figure>
+                <img style="height: 300px" class="shadow-blue-8" src="./pix/manuel-image.png">
+                <figcaption>
+                  <h2>Manuel</h2>
+                  <p>Odd dude who loves tea.</p>
+                </figcaption>
+              </figure>
+            </li>
+            <li>
+              <figure>
+                <img class="shadow-blue-8" style="height: 300px" src="./pix/codie-image.png">
+                <figcaption>
+                  <h2>Codie</h2>
+                  <p>Another odd dude who loves tea.</p>
+                </figcaption>
+              </figure>
+            </li>
+            <li>
+              <figure>
+                <img style="border: 1px solid #ffffff54; height: 300px;" src="./pix/tea-ceremony.jpg">
+                <figcaption>
+                  <h2>Tea</h2>
+                  <p>The love of our life.</p>
+                </figcaption>
+              </figure>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- SLIDE -->
+      <section class="bg-apple warp">
+        <div class="warp aligncenter">
+          <h1><strong>Tell your story as it deserves</strong></h1>
+        </div>
+      </section>
+
+
+    </article>
+  </main> <!-- end main -->
+
+  <!-- A global footer
+
+     <footer role="contentinfo ">
+      <div class="wrap ">
+        <p>An <a href="https://github.com/webslides/webslides ">open source solution</a>, by <a href="https://twitter.com/webslides ">@webslides</a>.</p>
+      </div>
+    </footer>  -->
+
+  <!-- Required -->
+  <script src="./js/webslides.js "></script>
+  <script src="./js/webslides-animation.js"></script>
+  <script>
+    const WARP_SPEED_MAX = 14;
+    const WARP_SPEED_NORMAL = 0.75;
+
+    window.onload = function () {
+      window.warpspeed = new WarpSpeed('warp-slide', {
+        // "speed": 0.7,
+        "speed": WARP_SPEED_NORMAL,
+        "speedAdjFactor": 0.06,
+        "density": 0.7,
+        "shape": "circle",
+        "warpEffect": true,
+        "warpEffectLength": 5,
+        "depthFade": true,
+        "starSize": 3,
+        "backgroundColor": "hsl(263,45%,7%)",
+        "starColor": "#C7C7C7"
+      })
+      // window.warpspeed.SPEED = 10
+    }
+
+    $("article")[0].addEventListener("ws:slide-change", (evt) => {
+
+      // prevents error message on startup
+      if (window.warpspeed !== undefined) {
+        window.warpspeed.TARGET_SPEED = WARP_SPEED_MAX;
+        setTimeout(() => {
+          window.warpspeed.TARGET_SPEED = WARP_SPEED_NORMAL;
+        }, 300)
+      }
+    })
+
+    // try to connect elements on each slide change
+    $("article")[0].addEventListener("ws:slide-change", () => {
+      connectDivs(".left-item", '.right-item');
+    })
+
+    window.ws = new WebSlides();
+    new WebSlidesAnimation(window.ws);
+
+    // animated tabs
+    $('.tabs-animated .tab').click(function () {
+      $('.tabs-animated  .tab.active').removeClass('active');
+      $(this).closest('.tabs-animated .tab').addClass('active');
+      return false;
+    });
+  </script>
+
+  <!-- Typewriter -->
+  <script>
+    const app = document.getElementById('typewriter-heading');
+
+    const typewriter = new Typewriter(app, {
+      loop: true,
+      wrapperClassName: "space-typewriter",
+      cursorClassName: "space-typewriter cursor",
+    });
+
+    typewriter.typeString('Suspenseful Animations')
+      .pauseFor(1000)
+      .deleteChars(10)
+      .typeString("Stories")
+      .pauseFor(1000)
+      .deleteAll()
+      .start();
+  </script>
+
+  <!-- INLINE SVG -->
+  <script>
+    $(function () {
+      jQuery('img.inline-svg').each(function () {
+        var $img = jQuery(this);
+        var imgID = $img.attr('id');
+        var imgClass = $img.attr('class');
+        var imgURL = $img.attr('src');
+
+        jQuery.get(imgURL, function (data) {
+
+          // Get the SVG tag, ignore the rest
+          var $svg = jQuery(data).find('svg');
+
+          // Add replaced image's ID to the new SVG
+          if (typeof imgID !== 'undefined') {
+            $svg = $svg.attr('id', imgID);
+          }
+          // Add replaced image's classes to the new SVG
+          if (typeof imgClass !== 'undefined') {
+            $svg = $svg.attr('class', imgClass + ' replaced-svg');
+          }
+
+          // Remove any invalid XML tags as per http://validator.w3.org
+          $svg = $svg.removeAttr('xmlns:a');
+
+          // Check if the viewport is set, else we gonna set it if we can.
+          if (!$svg.attr('viewBox') && $svg.attr('height') && $svg.attr('width')) {
+            $svg.attr('viewBox', '0 0 ' + $svg.attr('height') + ' ' + $svg.attr('width'))
+          }
+
+          // fit to container
+          $svg.attr("width", "100%");
+          $svg.attr("height", "100%");
+
+          // Replace image with new SVG
+          $img.replaceWith($svg);
+
+        }, 'xml');
+
+      });
+    });
+  </script>
+
+</body>
+
+</html>
