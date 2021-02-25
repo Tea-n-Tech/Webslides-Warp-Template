@@ -5,15 +5,18 @@ This webslides template is forged with a stunning space travelling effect. Addit
 
 ## Demo
 
-Visit the [Demo](https://tea-n-tech.github.io/Webslides-Warp-Template/#slide=1)
+[![Demo Preview](https://github.com/Tea-n-Tech/Webslides-Warp-Template/pix/webslides-screenshot.png)](https://tea-n-tech.github.io/Webslides-Warp-Template/#slide=1)
 
 ## Video
 
-Check out our [Youtube Video]() to this project.
+You can find the featured Youtube Video below.
 
-## Inspirations
+[![Youtube Video Preview](https://img.youtube.com/vi/rp7XB409fiA/0.jpg)](https://www.youtube.com/watch?v=rp7XB409fiA&feature=youtu.be)
+
+## Credits
 
  - A cup of Oolong-Tea 🍵
  - Warpspeed effect by [Federico Dossena](https://fdossena.com/?p=home.frag)
  - [highlight.js](https://highlightjs.org/) for code highlighting
  - [TypewriterJS](https://safi.me.uk/typewriterjs/) for writing animation
+ - Other stuff I forgot where it came from 😬 simply open an Issue or make a PR
