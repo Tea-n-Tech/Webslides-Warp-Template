@@ -5,7 +5,7 @@ This webslides template is forged with a stunning space travelling effect. Addit
 
 ## Demo
 
-[![Demo Preview](https://github.com/Tea-n-Tech/Webslides-Warp-Template/pix/webslides-screenshot.png)](https://tea-n-tech.github.io/Webslides-Warp-Template/#slide=1)
+[![Demo Preview](./pix/webslides-screenshot.png)](https://tea-n-tech.github.io/Webslides-Warp-Template/#slide=1)
 
 ## Video
 
